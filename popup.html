@@ -24,9 +24,48 @@
             padding: 5px;
             margin-bottom: 5px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
+
+        /* Text container to handle overflow */
+        .text-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; /* Allow text section to grow and take available space */
+            min-width: 0;  /* Prevent flex item from overflowing */
+            max-width: calc(100% - 150px); /* Allow for space on the right for the buttons */
+        }
+
+        .text-container span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .source, .destination {
+            max-width: 100%;  /* Allow text to fill the space */
+        }
+
+        .source {
+            width: 100%; /* Source domain takes full width */
+        }
+
+        .destination {
+            width: 100%; /* Destination domain takes full width */
+        }
+
+        /* Button container */
+        .buttons {
+            display: flex;
+            justify-content: flex-end; /* Push buttons to the right */
+            align-items: center;
+            width: 150px; /* Fixed width for the button area */
+            min-width: 150px;
+            margin-left: 10px; /* Space between text and buttons */
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
@@ -39,15 +78,15 @@
 <form id="ruleForm">
     <input type="text" id="sourceDomain" placeholder="Source Domain (e.g., http://example.com)" required />
     <input type="text" id="destinationDomain" placeholder="Destination Domain (e.g., https://newdomain.com)" required />
-    <button type="submit">添加规则</button>
+    <button type="submit">Add Rule</button>
 </form>
-<h3>当前规则</h3>
-<input type="text" id="searchInput" placeholder="搜索规则" onkeyup="filterRules()" />
+<h3>Rules List</h3>
+<input type="text" id="searchInput" placeholder="search" onkeyup="filterRules()" />
 <div id="rulesList"></div>
 <div class="pagination">
-    <button id="prevPage">上一页</button>
+    <button id="prevPage">Pre Page</button>
     <span id="pageInfo"></span>
-    <button id="nextPage">下一页</button>
+    <button id="nextPage">Next Page</button>
 </div>
 
 <script src="popup.js"></script>

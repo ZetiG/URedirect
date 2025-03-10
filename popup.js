@@ -16,19 +16,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // 渲染规则列表
     function renderRules() {
         const searchText = searchInput.value.trim().toLowerCase();
-        const filteredRules = rules
-            .filter(rule =>
-                rule.sourceDomain.toLowerCase().includes(searchText) ||
-                rule.destinationDomain.toLowerCase().includes(searchText)
-            )
-            .sort((a, b) => b.timestamp - a.timestamp);
+        const filteredRules = rules.filter(rule =>
+            rule.sourceDomain.toLowerCase().includes(searchText) ||
+            rule.destinationDomain.toLowerCase().includes(searchText)
+        );
 
         const start = (currentPage - 1) * rulesPerPage;
         const paginatedRules = filteredRules.slice(start, start + rulesPerPage);
 
         rulesList.innerHTML = '';
         if (paginatedRules.length === 0) {
-            rulesList.innerHTML = '<p>暂无规则</p>';
+            rulesList.innerHTML = '<p>No Rules Available</p>';
             return;
         }
 
@@ -36,17 +34,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const ruleDiv = document.createElement('div');
             ruleDiv.className = 'rule';
             ruleDiv.innerHTML = `
-                <span><strong>源:</strong> ${rule.sourceDomain} → <strong>目标:</strong> ${rule.destinationDomain}</span>
-                <div>
-                    <button data-id="${rule.id}" class="toggleRule">${rule.enabled ? '禁用' : '启用'}</button>
-                    <button data-id="${rule.id}" class="editRule">编辑</button>
-                    <button data-id="${rule.id}" class="deleteRule">删除</button>
+                <div class="text-container">
+                    <span title="${rule.sourceDomain}"><strong>source:</strong> ${rule.sourceDomain}</span>
+                    <span title="${rule.destinationDomain}"><strong>target:</strong> ${rule.destinationDomain}</span>
+                </div>
+                <div class="buttons">
+                    <button data-id="${rule.id}" class="toggleRule">${rule.enabled ? 'Disable' : 'Enable'}</button>
+                    <button data-id="${rule.id}" class="editRule">Edit</button>
+                    <button data-id="${rule.id}" class="deleteRule">Delete</button>
                 </div>
             `;
             rulesList.appendChild(ruleDiv);
         });
 
-        pageInfo.textContent = `第 ${currentPage} 页 / 共 ${Math.ceil(filteredRules.length / rulesPerPage)} 页`;
+        pageInfo.textContent = `page ${currentPage} / of ${Math.ceil(filteredRules.length / rulesPerPage)}`;
         prevPageBtn.disabled = currentPage === 1;
         nextPageBtn.disabled = currentPage * rulesPerPage >= filteredRules.length;
     }

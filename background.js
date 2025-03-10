@@ -44,7 +44,7 @@ function buildDynamicRules(redirectRules) {
             };
             dynamicRules.push(dynamicRule);
         } catch (e) {
-            console.error("规则处理错误:", rule, e);
+            console.error("rule processing error: ", rule, e);
         }
     }
     return dynamicRules;
@@ -60,7 +60,7 @@ function updateDynamicRules(rules) {
             addRules: buildDynamicRules(rules)
         }, () => {
             if (chrome.runtime.lastError) {
-                console.error("更新规则出错:", chrome.runtime.lastError);
+                console.error("updating rules error:", chrome.runtime.lastError);
             }
         });
     });
