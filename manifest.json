@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "URedirect",
+  "description": "A simple URL redirect Chrome extension that allows users to add custom redirect rules.",
+  "version": "1.0",
+  "permissions": [
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

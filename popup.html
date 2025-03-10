@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>URedirect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: 300px;
+        }
+        input {
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 5px;
+        }
+        .rule {
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+        .rule button {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+<h2>URedirect</h2>
+<form id="ruleForm">
+    <input type="text" id="sourceDomain" placeholder="Source Domain (e.g., http://example.com)" required />
+    <input type="text" id="destinationDomain" placeholder="Destination Domain (e.g., https://newdomain.com)" required />
+    <button type="submit">添加规则</button>
+</form>
+<h3>当前规则</h3>
+<div id="rulesList"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>
