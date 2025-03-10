@@ -7,9 +7,9 @@
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
-            width: 300px;
+            width: 350px;
         }
-        input {
+        input, select {
             width: 100%;
             margin-bottom: 5px;
             padding: 5px;
@@ -17,14 +17,20 @@
         }
         button {
             padding: 5px;
+            margin: 2px;
         }
         .rule {
             border: 1px solid #ccc;
             padding: 5px;
             margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .rule button {
-            float: right;
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -36,7 +42,13 @@
     <button type="submit">添加规则</button>
 </form>
 <h3>当前规则</h3>
+<input type="text" id="searchInput" placeholder="搜索规则" onkeyup="filterRules()" />
 <div id="rulesList"></div>
+<div class="pagination">
+    <button id="prevPage">上一页</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">下一页</button>
+</div>
 
 <script src="popup.js"></script>
 </body>

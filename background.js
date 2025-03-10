@@ -12,6 +12,9 @@ function buildDynamicRules(redirectRules) {
     let dynamicRules = [];
     let ruleId = 1;
     for (const rule of redirectRules) {
+        // 仅构建启用状态的规则
+        if (!rule.enabled) continue;
+
         try {
             let sourceUrl = new URL(rule.sourceDomain);
             let destUrl = new URL(rule.destinationDomain);
