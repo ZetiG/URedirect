@@ -1,3 +1,5 @@
+// popup.js
+
 document.addEventListener('DOMContentLoaded', function () {
     const ruleForm = document.getElementById('ruleForm');
     const sourceInput = document.getElementById('sourceDomain');
@@ -15,6 +17,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 渲染规则列表
     function renderRules() {
+        rules.sort((a, b) => b.timestamp - a.timestamp); // 确保按时间倒序排列
+
         const searchText = searchInput.value.trim().toLowerCase();
         const filteredRules = rules.filter(rule =>
             rule.sourceDomain.toLowerCase().includes(searchText) ||
@@ -52,17 +56,50 @@ document.addEventListener('DOMContentLoaded', function () {
         nextPageBtn.disabled = currentPage * rulesPerPage >= filteredRules.length;
     }
 
-    // 保存规则
+    // 保存规则到 IndexedDB
     function saveRules() {
-        chrome.storage.local.set({ redirectRules: rules });
+        const request = indexedDB.open('RedirectDB', 1);
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+            const transaction = db.transaction(['rules'], 'readwrite');
+            const store = transaction.objectStore('rules');
+            store.clear();
+            rules.forEach(rule => store.put(rule));
+        };
+        chrome.runtime.sendMessage({ action: "updateRules" }); // 发送消息更新 rules
     }
 
     // 加载规则
     function loadRules() {
-        chrome.storage.local.get({ redirectRules: [] }, function (data) {
-            rules = data.redirectRules.sort((a, b) => b.timestamp - a.timestamp);
-            renderRules();
-        });
+        const request = indexedDB.open('RedirectDB', 1);
+
+        // 如果数据库版本发生变化，或首次创建数据库，则触发 onupgradeneeded 事件
+        request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+
+            // 检查是否已存在 'rules' 对象存储，如果没有则创建
+            if (!db.objectStoreNames.contains('rules')) {
+                db.createObjectStore('rules', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            const db = event.target.result;
+
+            // 这里只执行读取操作，保证数据库已经存在 'rules' 存储
+            const transaction = db.transaction(['rules'], 'readonly');
+            const store = transaction.objectStore('rules');
+            const getAllRequest = store.getAll();
+
+            getAllRequest.onsuccess = function() {
+                rules = getAllRequest.result ? getAllRequest.result.sort((a, b) => b.timestamp - a.timestamp) : [];
+                renderRules();
+            };
+        };
+
+        request.onerror = function(event) {
+            console.error('Database error:', event.target.error);
+        };
     }
 
     // 添加或更新规则
@@ -72,16 +109,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const destinationDomain = destinationInput.value.trim();
         if (!sourceDomain || !destinationDomain) return;
 
-        // 查找是否已有相同源域名规则
         const existingRule = rules.find(rule => rule.sourceDomain === sourceDomain);
-
         if (existingRule) {
-            // 更新已有规则
             existingRule.destinationDomain = destinationDomain;
             existingRule.timestamp = Date.now();
-            existingRule.enabled = true; // 编辑时默认重新启用
+            existingRule.enabled = true;
         } else {
-            // 添加新规则
             const newRule = {
                 id: Date.now(),
                 sourceDomain,
@@ -96,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderRules();
         sourceInput.value = '';
         destinationInput.value = '';
-        editingRuleId = null;  // 清除编辑状态
+        editingRuleId = null;
     });
 
     // 事件监听
@@ -108,9 +141,9 @@ document.addEventListener('DOMContentLoaded', function () {
             renderRules();
         } else if (e.target.classList.contains('toggleRule')) {
             const rule = rules.find(rule => rule.id === id);
-            rule.enabled = !rule.enabled;
-            saveRules();
-            renderRules();
+            rule.enabled = !rule.enabled; // 切换启用/禁用状态
+            saveRules(); // 更新到 IndexedDB
+            renderRules(); // 更新 UI
         } else if (e.target.classList.contains('editRule')) {
             const rule = rules.find(rule => rule.id === id);
             sourceInput.value = rule.sourceDomain;

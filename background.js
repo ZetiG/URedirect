@@ -1,9 +1,29 @@
 // background.js
 
-// 从 storage 中加载规则
+// 打开 IndexedDB 数据库
+function openDb() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('RedirectDB', 1);
+        request.onupgradeneeded = (event) => {
+            let db = event.target.result;
+            if (!db.objectStoreNames.contains('rules')) {
+                db.createObjectStore('rules', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (event) => reject(event.target.error);
+    });
+}
+
+// 从 IndexedDB 加载规则
 function loadRules(callback) {
-    chrome.storage.local.get({ redirectRules: [] }, (data) => {
-        callback(data.redirectRules);
+    openDb().then(db => {
+        const transaction = db.transaction(['rules'], 'readonly');
+        const store = transaction.objectStore('rules');
+        const request = store.getAll();
+        request.onsuccess = () => callback(request.result);
+        request.onerror = (event) => console.error('Error loading rules:', event.target.error);
     });
 }
 
@@ -39,41 +59,47 @@ function buildDynamicRules(redirectRules) {
                 },
                 condition: {
                     urlFilter: urlFilter,
-                    resourceTypes: ["main_frame"]
+                    resourceTypes: ["main_frame"] // 只匹配主框架请求
                 }
             };
             dynamicRules.push(dynamicRule);
         } catch (e) {
-            console.error("rule processing error: ", rule, e);
+            console.error("Rule processing error: ", rule, e);
         }
     }
     return dynamicRules;
 }
 
 
-// 更新动态规则：先移除现有规则，再添加新规则
-function updateDynamicRules(rules) {
-    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
-        const existingIds = existingRules.map(rule => rule.id);
-        chrome.declarativeNetRequest.updateDynamicRules({
-            removeRuleIds: existingIds,
-            addRules: buildDynamicRules(rules)
-        }, () => {
-            if (chrome.runtime.lastError) {
-                console.error("updating rules error:", chrome.runtime.lastError);
-            }
+// 更新动态规则
+function updateDynamicRules() {
+    loadRules((rules) => {
+        console.log("Loading rules from IndexedDB:", rules); // Debug log
+        chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+            const existingIds = existingRules.map(rule => rule.id);
+            console.log("Existing rules:", existingRules); // Debug log
+
+            chrome.declarativeNetRequest.updateDynamicRules({
+                removeRuleIds: existingIds,
+                addRules: buildDynamicRules(rules)
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error("Updating rules error:", chrome.runtime.lastError);
+                } else {
+                    console.log("Rules updated successfully."); // Debug log
+                }
+            });
         });
     });
 }
 
-// 监听 storage 中规则的变化，实时更新动态规则
-chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes.redirectRules) {
-        updateDynamicRules(changes.redirectRules.newValue);
+// 监听 IndexedDB 变化的方式：popup.js 修改数据后手动通知 background.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "updateRules") {
+        updateDynamicRules(); // 更新动态规则
+        sendResponse({ status: "Rules updated" });
     }
 });
 
 // 初始加载规则并更新动态规则
-loadRules((rules) => {
-    updateDynamicRules(rules);
-});
+updateDynamicRules();
